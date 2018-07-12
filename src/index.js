@@ -126,7 +126,7 @@ export class Map extends React.Component {
 
   loadMap() {
     if (this.props && this.props.google) {
-      const {google} = this.props;
+      const { google } = this.props;
       const maps = google.maps;
 
       const mapRef = this.refs.map;
@@ -136,35 +136,48 @@ export class Map extends React.Component {
 
       const mapTypeIds = this.props.google.maps.MapTypeId || {};
       const mapTypeFromProps = String(this.props.mapType).toUpperCase();
+      const mapTypeId = mapTypeIds[mapTypeFromProps]
+      const mapTypeControlOptions = {
+        mapTypeIds: Object.keys(mapTypeIds).map(function (key) {
+          return mapTypeIds[key];
+        })
+      }
 
-      const mapConfig = Object.assign(
-        {},
-        {
-          mapTypeId: mapTypeIds[mapTypeFromProps],
-          center: center,
-          zoom: this.props.zoom,
-          maxZoom: this.props.maxZoom,
-          minZoom: this.props.minZoom,
-          clickableIcons: !!this.props.clickableIcons,
-          disableDefaultUI: this.props.disableDefaultUI,
-          zoomControl: this.props.zoomControl,
-          mapTypeControl: this.props.mapTypeControl,
-          scaleControl: this.props.scaleControl,
-          streetViewControl: this.props.streetViewControl,
-          panControl: this.props.panControl,
-          rotateControl: this.props.rotateControl,
-          fullscreenControl: this.props.fullscreenControl,
-          scrollwheel: this.props.scrollwheel,
-          draggable: this.props.draggable,
-          keyboardShortcuts: this.props.keyboardShortcuts,
-          disableDoubleClickZoom: this.props.disableDoubleClickZoom,
-          noClear: this.props.noClear,
-          styles: this.props.styles,
-          gestureHandling: this.props.gestureHandling
+      const styledMap = this.props.mapStyles || [];
+      const styleName = 'styled_map';
+      if (styledMap.length) {
+        mapTypeControlOptions.mapTypeIds.push(styleName);
+        if (mapTypeFromProps === styleName.toUpperCase()) {
+          mapTypeId = styleName
         }
-      );
+      }
 
-      Object.keys(mapConfig).forEach(key => {
+      const mapConfig = Object.assign({}, {
+        mapTypeId: mapTypeId,
+        center: center,
+        zoom: this.props.zoom,
+        maxZoom: this.props.maxZoom,
+        minZoom: this.props.minZoom,
+        clickableIcons: !!this.props.clickableIcons,
+        disableDefaultUI: this.props.disableDefaultUI,
+        zoomControl: this.props.zoomControl,
+        mapTypeControl: this.props.mapTypeControl,
+        scaleControl: this.props.scaleControl,
+        streetViewControl: this.props.streetViewControl,
+        panControl: this.props.panControl,
+        rotateControl: this.props.rotateControl,
+        fullscreenControl: this.props.fullscreenControl,
+        scrollwheel: this.props.scrollwheel,
+        draggable: this.props.draggable,
+        keyboardShortcuts: this.props.keyboardShortcuts,
+        disableDoubleClickZoom: this.props.disableDoubleClickZoom,
+        noClear: this.props.noClear,
+        styles: this.props.styles,
+        gestureHandling: this.props.gestureHandling,
+        mapTypeControlOptions: mapTypeControlOptions
+      });
+
+      Object.keys(mapConfig).forEach(function (key) {
         // Allow to configure mapConfig with 'false'
         if (mapConfig[key] === null) {
           delete mapConfig[key];
@@ -173,8 +186,13 @@ export class Map extends React.Component {
 
       this.map = new maps.Map(node, mapConfig);
 
-      evtNames.forEach(e => {
-        this.listeners[e] = this.map.addListener(e, this.handleEvent(e));
+      if (styledMap.length) {
+        const styledMapType = new google.maps.StyledMapType(styledMap, {name: styleName});
+        this.map.mapTypes.set(styleName, styledMapType);
+      }
+
+      evtNames.forEach(function (e) {
+        _this4.listeners[e] = _this4.map.addListener(e, _this4.handleEvent(e));
       });
       maps.event.trigger(this.map, 'ready');
       this.forceUpdate();
